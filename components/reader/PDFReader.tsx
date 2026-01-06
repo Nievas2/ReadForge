@@ -1,3 +1,4 @@
+"use client"
 import { useState, useCallback, useEffect, SetStateAction } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import { motion, AnimatePresence } from "framer-motion"
