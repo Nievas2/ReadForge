@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import { useState, useCallback, useEffect, SetStateAction } from "react"
-import { Document, Page, pdfjs } from "react-pdf"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronLeft,
@@ -23,8 +23,8 @@ import type { PDFBook, ReadingProgress } from "@/types"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
 
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+// Set up PDF.js worker (moved to dynamic load)
+// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 interface PDFReaderProps {
   book: PDFBook
@@ -168,6 +168,28 @@ export function PDFReader({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [pageNumber, numPages, isFullscreen, goToNextPage, goToPrevPage, toggleFullscreen, onClose])
 
+  // Dynamic load react-pdf to avoid server-side evaluation (DOMMatrix error)
+  const [PDFLib, setPDFLib] = useState<null | {
+    Document: any
+    Page: any
+    pdfjs: any
+  }>(null)
+
+  useEffect(() => {
+    let mounted = true
+    import("react-pdf").then((mod) => {
+      if (!mounted) return
+      // set worker after loading pdfjs
+      mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`
+      setPDFLib({ Document: mod.Document, Page: mod.Page, pdfjs: mod.pdfjs })
+    }).catch((err) => {
+      console.error("Error loading react-pdf:", err)
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -286,30 +308,34 @@ export function PDFReader({
           </div>
         )}
 
-        <Document
-          file={book.file}
-          onLoadSuccess={onDocumentLoadSuccess}
-          loading={null}
-          className="shadow-2xl rounded-lg overflow-hidden"
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pageNumber}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                className="reader-page"
-              />
-            </motion.div>
-          </AnimatePresence>
-        </Document>
+        {PDFLib ? (
+          <PDFLib.Document
+            file={book.file}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={null}
+            className="shadow-2xl rounded-lg overflow-hidden"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pageNumber}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.15 }}
+              >
+                <PDFLib.Page
+                  pageNumber={pageNumber}
+                  scale={scale}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="reader-page"
+                />
+              </motion.div>
+            </AnimatePresence>
+          </PDFLib.Document>
+        ) : (
+          <div className="text-muted-foreground">Loading PDF renderer...</div>
+        )}
       </main>
 
       {/* Navigation */}

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useCallback } from "react"
 import { AnimatePresence } from "framer-motion"
 import { Header } from "@/components/layout/Header"
