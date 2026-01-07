@@ -1,5 +1,5 @@
 "use client"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { saveToStorage, loadFromStorage } from "@/lib/storage"
 import type { UserStats } from "@/types"
 
@@ -22,16 +22,22 @@ function getTodayDate(): string {
 }
 
 export function useUserStats() {
-  const [stats, setStats] = useState<UserStats>(() => {
-    const loaded = loadFromStorage<UserStats>(STATS_KEY, DEFAULT_STATS)
+  const [stats, setStats] = useState<UserStats>(DEFAULT_STATS)
 
-    // Reset today's reading time if it's a new day
+   useEffect(() => {
+    const loaded = loadFromStorage<UserStats>(STATS_KEY, DEFAULT_STATS)
     const today = getTodayDate()
     if (loaded.lastReadDate !== today) {
       loaded.todayReadingTime = 0
     }
-    return loaded
-  })
+
+    const raf = requestAnimationFrame(() => {
+      setStats(loaded)
+    })
+
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
 
   const updateStats = useCallback((updates: Partial<UserStats>) => {
     setStats((prev) => {
