@@ -123,3 +123,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+.react-pdf__Page {
+  background: white;
+}
+
+/* Arregla texto invisible */
+.react-pdf__Page__textContent {
+  color: black !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Evita que el texto sea invisible */
+.react-pdf__Page__textContent span {
+  color: black !important;
+}
+
+.dark .react-pdf__Page__textContent,
+.dark .react-pdf__Page__textContent span {
+  color: black !important;
+}
+
+.react-pdf__Page__textContent span {
+  user-select: text;
+  pointer-events: auto;
+  padding: 2px 0;
+}

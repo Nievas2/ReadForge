@@ -23,9 +23,6 @@ import type { PDFBook, ReadingProgress } from "@/types"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
 
-// Set up PDF.js worker (moved to dynamic load)
-// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
-
 interface PDFReaderProps {
   book: PDFBook
   initialProgress?: ReadingProgress
@@ -80,7 +77,6 @@ export function PDFReader({
       window.removeEventListener("click", handleActivity)
     }
   }, [recordActivity])
-
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
@@ -145,7 +141,6 @@ export function PDFReader({
   // Get sticker emojis for decoration
   const stickerEmojis = equippedStickers.slice(0, 4)
 
-  
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -166,7 +161,15 @@ export function PDFReader({
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [pageNumber, numPages, isFullscreen, goToNextPage, goToPrevPage, toggleFullscreen, onClose])
+  }, [
+    pageNumber,
+    numPages,
+    isFullscreen,
+    goToNextPage,
+    goToPrevPage,
+    toggleFullscreen,
+    onClose,
+  ])
 
   // Dynamic load react-pdf to avoid server-side evaluation (DOMMatrix error)
   const [PDFLib, setPDFLib] = useState<null | {
@@ -177,14 +180,16 @@ export function PDFReader({
 
   useEffect(() => {
     let mounted = true
-    import("react-pdf").then((mod) => {
-      if (!mounted) return
-      // set worker after loading pdfjs
-      mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`
-      setPDFLib({ Document: mod.Document, Page: mod.Page, pdfjs: mod.pdfjs })
-    }).catch((err) => {
-      console.error("Error loading react-pdf:", err)
-    })
+    import("react-pdf")
+      .then((mod) => {
+        if (!mounted) return
+        // set worker after loading pdfjs
+        mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`
+        setPDFLib({ Document: mod.Document, Page: mod.Page, pdfjs: mod.pdfjs })
+      })
+      .catch((err) => {
+        console.error("Error loading react-pdf:", err)
+      })
     return () => {
       mounted = false
     }
@@ -257,7 +262,7 @@ export function PDFReader({
       <Progress value={progressPercent} className="h-1 rounded-none" />
 
       {/* PDF Content */}
-      <main className="flex-1 overflow-auto flex items-center justify-center p-4 relative">
+      <main className="flex justify-center overflow-auto p-4 relative">
         {/* Equipped sticker decorations */}
         {stickerEmojis.length > 0 && (
           <>
@@ -313,7 +318,7 @@ export function PDFReader({
             file={book.file}
             onLoadSuccess={onDocumentLoadSuccess}
             loading={null}
-            className="shadow-2xl rounded-lg overflow-hidden"
+            className="shadow-2xl"
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -328,7 +333,7 @@ export function PDFReader({
                   scale={scale}
                   renderTextLayer={true}
                   renderAnnotationLayer={true}
-                  className="reader-page"
+                  className="reader-page text-black"
                 />
               </motion.div>
             </AnimatePresence>
@@ -356,7 +361,9 @@ export function PDFReader({
             min={1}
             max={numPages}
             value={pageInputValue}
-            onChange={(e: { target: { value: SetStateAction<string> } }) => setPageInputValue(e.target.value)}
+            onChange={(e: { target: { value: SetStateAction<string> } }) =>
+              setPageInputValue(e.target.value)
+            }
             className="w-16 text-center"
           />
           <span className="text-muted-foreground">/ {numPages}</span>

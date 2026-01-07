@@ -46,7 +46,7 @@ export function BookCard({ book, progress, onRead, onDelete }: BookCardProps) {
         onClick={() => onRead(book)}
       >
         {/* Book Cover */}
-        <div className="aspect-3/4 bg-linear-to-br from-primary/20 via-primary/10 to-accent/10 flex items-center justify-center relative overflow-hidden">
+        <div className="aspect-4/4 bg-linear-to-br from-primary/20 via-primary/10 to-accent/10 flex items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,hsl(var(--primary)/0.05)_50%,transparent_75%)] bg-size-[200%_200%] animate-shimmer" />
           
           <Book className="w-16 h-16 text-primary/40" />
