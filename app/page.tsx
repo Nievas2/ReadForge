@@ -1,13 +1,11 @@
 "use client"
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useCallback } from "react"
-import { AnimatePresence } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/Header"
 import { BookLibrary } from "@/components/library/BookLibrary"
-import { PDFReader } from "@/components/reader/PDFReader"
 import { StatsCards } from "@/components/gamification/StatsCards"
 import { StickerGrid } from "@/components/gamification/StickerShop"
-import { CoinAnimation } from "@/components/gamification/CoinDisplay"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
@@ -24,22 +22,17 @@ import { useToast } from "@/hooks/use-toast"
 import type { PDFBook, Sticker } from "@/types"
 
 export default function Dashboard() {
-  const [selectedBook, setSelectedBook] = useState<PDFBook | null>(null)
+  const router = useRouter()
   const [shopOpen, setShopOpen] = useState(false)
-  const [coinAnimation, setCoinAnimation] = useState<{
-    show: boolean
-    amount: number
-  }>({ show: false, amount: 0 })
   const [stickerCategory, setStickerCategory] = useState<
     "all" | "book" | "character" | "achievement"
   >("all")
 
-  const { books, addBook, updateBook, deleteBook } = useBooks()
-  const { stats, addCoins, spendCoins, recordReading, completeBook } =
-    useUserStats()
+  const { books, addBook, deleteBook } = useBooks()
+  const { stats, spendCoins } = useUserStats()
   const { userStickers, unlockSticker, equipSticker, unequipSticker } =
     useStickers()
-  const { allProgress, updateProgress, getBookProgress } = useProgress()
+  const { allProgress } = useProgress()
   const { theme, toggleTheme } = useTheme()
   const { toast } = useToast()
 
@@ -49,13 +42,6 @@ export default function Dashboard() {
     allProgress.forEach((p) => map.set(p.bookId, p))
     return map
   }, [allProgress])
-
-  // Get equipped sticker emojis
-  const equippedStickerEmojis = useMemo(() => {
-    return userStickers.equipped
-      .map((id) => ALL_STICKERS.find((s) => s.id === id)?.emoji)
-      .filter(Boolean) as string[]
-  }, [userStickers.equipped])
 
   const handleAddBook = useCallback(
     async (file: File) => {
@@ -72,11 +58,9 @@ export default function Dashboard() {
 
   const handleReadBook = useCallback(
     (book: PDFBook) => {
-      setSelectedBook(book)
-      // Update last read time
-      updateBook(book.id, { lastReadAt: Date.now() })
+      router.push(`/reader/${book.id}`)
     },
-    [updateBook]
+    [router]
   )
 
   const handleDeleteBook = useCallback(
@@ -88,31 +72,6 @@ export default function Dashboard() {
       })
     },
     [deleteBook, toast]
-  )
-
-  const handleCoinsEarned = useCallback(
-    (amount: number) => {
-      addCoins(amount)
-      setCoinAnimation({ show: true, amount })
-      setTimeout(() => setCoinAnimation({ show: false, amount: 0 }), 600)
-    },
-    [addCoins]
-  )
-
-  const handleProgressUpdate = useCallback(
-    (bookId: string, page: number, total: number) => {
-      updateProgress(bookId, page, total)
-
-      // Check if book completed
-      if (page >= total) {
-        completeBook()
-        toast({
-          title: "🎉 Book Completed!",
-          description: `You've earned ${50} bonus coins!`,
-        })
-      }
-    },
-    [updateProgress, completeBook, toast]
   )
 
   const handleBuySticker = useCallback(
@@ -177,26 +136,6 @@ export default function Dashboard() {
           />
         </section>
       </main>
-
-      {/* PDF Reader Modal */}
-      <AnimatePresence>
-        {selectedBook && (
-          <PDFReader
-            book={selectedBook}
-            initialProgress={getBookProgress(selectedBook.id)}
-            coins={stats.coins}
-            equippedStickers={equippedStickerEmojis}
-            onClose={() => setSelectedBook(null)}
-            onProgressUpdate={handleProgressUpdate}
-            onCoinsEarned={handleCoinsEarned}
-            onRecordReading={recordReading}
-            onBookUpdate={updateBook}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Coin Animation */}
-      <CoinAnimation show={coinAnimation.show} amount={coinAnimation.amount} />
 
       {/* Sticker Shop Dialog */}
       <Dialog open={shopOpen} onOpenChange={setShopOpen}>

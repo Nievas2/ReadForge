@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import { useState, useCallback, useEffect, SetStateAction } from "react"
+import { useState, useCallback, useEffect, SetStateAction, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronLeft,
@@ -54,6 +54,7 @@ export function PDFReader({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [pageInputValue, setPageInputValue] = useState(String(pageNumber))
   const [isLoading, setIsLoading] = useState(true)
+  const mainRef = useRef<HTMLDivElement>(null)
 
   const { recordActivity, changePage } = useReadingSession({
     bookId: book.id,
@@ -171,6 +172,34 @@ export function PDFReader({
     onClose,
   ])
 
+  // Ctrl + wheel zoom handler
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        
+        if (e.deltaY < 0) {
+          // Zoom in
+          setScale((s) => Math.min(2, s + 0.1))
+        } else {
+          // Zoom out
+          setScale((s) => Math.max(0.5, s - 0.1))
+        }
+      }
+    }
+
+    const mainElement = mainRef.current
+    if (mainElement) {
+      mainElement.addEventListener("wheel", handleWheel, { passive: false })
+    }
+
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener("wheel", handleWheel)
+      }
+    }
+  }, [])
+
   // Dynamic load react-pdf to avoid server-side evaluation (DOMMatrix error)
   const [PDFLib, setPDFLib] = useState<null | {
     Document: any
@@ -262,13 +291,13 @@ export function PDFReader({
       <Progress value={progressPercent} className="h-1 rounded-none" />
 
       {/* PDF Content */}
-      <main className="flex justify-center overflow-auto p-4 relative">
+      <main ref={mainRef} className="flex-1 flex justify-center items-start overflow-auto p-4 relative">
         {/* Equipped sticker decorations */}
         {stickerEmojis.length > 0 && (
           <>
             {stickerEmojis[0] && (
               <motion.div
-                className="absolute top-8 left-8 text-4xl opacity-30 pointer-events-none"
+                className="absolute top-8 left-8 text-4xl opacity-30 pointer-events-none z-10"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
@@ -277,7 +306,7 @@ export function PDFReader({
             )}
             {stickerEmojis[1] && (
               <motion.div
-                className="absolute top-8 right-8 text-4xl opacity-30 pointer-events-none"
+                className="absolute top-8 right-8 text-4xl opacity-30 pointer-events-none z-10"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
               >
@@ -286,7 +315,7 @@ export function PDFReader({
             )}
             {stickerEmojis[2] && (
               <motion.div
-                className="absolute bottom-24 left-8 text-4xl opacity-30 pointer-events-none"
+                className="absolute bottom-24 left-8 text-4xl opacity-30 pointer-events-none z-10"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 1 }}
               >
@@ -295,7 +324,7 @@ export function PDFReader({
             )}
             {stickerEmojis[3] && (
               <motion.div
-                className="absolute bottom-24 right-8 text-4xl opacity-30 pointer-events-none"
+                className="absolute bottom-24 right-8 text-4xl opacity-30 pointer-events-none z-10"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
               >
@@ -306,41 +335,45 @@ export function PDFReader({
         )}
 
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
             <div className="animate-pulse text-muted-foreground">
               Loading PDF...
             </div>
           </div>
         )}
 
-        {PDFLib ? (
-          <PDFLib.Document
-            file={book.file}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={null}
-            className="shadow-2xl"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pageNumber}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.15 }}
-              >
-                <PDFLib.Page
-                  pageNumber={pageNumber}
-                  scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  className="reader-page text-black"
-                />
-              </motion.div>
-            </AnimatePresence>
-          </PDFLib.Document>
-        ) : (
-          <div className="text-muted-foreground">Loading PDF renderer...</div>
-        )}
+        <div className="w-full max-w-full flex justify-center" style={{ userSelect: 'text' }}>
+          {PDFLib ? (
+            <PDFLib.Document
+              file={book.file}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={null}
+              className="shadow-2xl"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={pageNumber}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.15 }}
+                  className="w-full flex justify-center"
+                >
+                  <PDFLib.Page
+                    pageNumber={pageNumber}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="reader-page text-black max-w-full"
+                    width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 32, 800 * scale) : undefined}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </PDFLib.Document>
+          ) : (
+            <div className="text-muted-foreground">Loading PDF renderer...</div>
+          )}
+        </div>
       </main>
 
       {/* Navigation */}
