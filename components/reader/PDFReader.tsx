@@ -361,9 +361,9 @@ export function PDFReader({
                 >
                   <PDFLib.Page
                     pageNumber={pageNumber}
+                    renderAnnotationLayer={false}
                     scale={scale}
                     renderTextLayer={true}
-                    renderAnnotationLayer={true}
                     className="reader-page text-black max-w-full"
                     width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 32, 800 * scale) : undefined}
                   />
