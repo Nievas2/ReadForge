@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { PDFReader } from "@/components/reader/PDFReader"
 import { getBook } from "@/lib/db"
@@ -14,10 +14,10 @@ export default function ReaderPage() {
   const params = useParams()
   const router = useRouter()
   const bookId = params.bookId as string
-  
+
   const [book, setBook] = useState<PDFBook | null>(null)
   const [loading, setLoading] = useState(true)
-  
+
   const { stats, addCoins, recordReading, completeBook } = useUserStats()
   const { userStickers } = useStickers()
   const { updateProgress, getBookProgress } = useProgress()
@@ -72,13 +72,27 @@ export default function ReaderPage() {
     .map((id) => ALL_STICKERS.find((s) => s.id === id)?.emoji)
     .filter(Boolean) as string[]
 
-  const handleCoinsEarned = (amount: number) => {
-    addCoins(amount)
-    setCoinAnimation({ show: true, amount })
-    setTimeout(() => setCoinAnimation({ show: false, amount: 0 }), 600)
-  }
+  const handleCoinsEarned = useCallback(
+    (amount: number) => {
+      addCoins(amount)
+      setCoinAnimation({ show: true, amount })
+      setTimeout(() => setCoinAnimation({ show: false, amount: 0 }), 600)
+    },
+    [addCoins]
+  )
 
-  const handleProgressUpdate = (bookId: string, page: number, total: number) => {
+  const handleRecordReading = useCallback(
+    (time: number, pages: number) => {
+      recordReading(time, pages)
+    },
+    [recordReading]
+  )
+
+  const handleProgressUpdate = (
+    bookId: string,
+    page: number,
+    total: number
+  ) => {
     updateProgress(bookId, page, total)
 
     // Check if book completed
@@ -91,9 +105,12 @@ export default function ReaderPage() {
     }
   }
 
-  const handleBookUpdate = async (bookId: string, updates: Partial<PDFBook>) => {
+  const handleBookUpdate = async (
+    bookId: string,
+    updates: Partial<PDFBook>
+  ) => {
     if (!book) return
-    
+
     try {
       const { saveBook } = await import("@/lib/db")
       const updated = { ...book, ...updates }
@@ -140,7 +157,7 @@ export default function ReaderPage() {
         onClose={handleClose}
         onProgressUpdate={handleProgressUpdate}
         onCoinsEarned={handleCoinsEarned}
-        onRecordReading={recordReading}
+        onRecordReading={handleRecordReading}
         onBookUpdate={handleBookUpdate}
       />
       <CoinAnimation show={coinAnimation.show} amount={coinAnimation.amount} />
