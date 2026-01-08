@@ -16,8 +16,6 @@ export default function ReaderPage() {
   const bookId = params.bookId as string
 
   const [book, setBook] = useState<PDFBook | null>(null)
-  const [loading, setLoading] = useState(true)
-
   const { stats, addCoins, recordReading, completeBook } = useUserStats()
   const { userStickers } = useStickers()
   const { updateProgress, getBookProgress } = useProgress()
@@ -45,7 +43,6 @@ export default function ReaderPage() {
               description: "The requested book could not be found.",
             })
           }
-          setLoading(false)
         }
       } catch (error) {
         console.error("Failed to load book:", error)
@@ -55,7 +52,6 @@ export default function ReaderPage() {
             title: "Error Loading Book",
             description: "There was an error loading the book.",
           })
-          setLoading(false)
         }
       }
     }
@@ -132,16 +128,6 @@ export default function ReaderPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book?.id])
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">
-          Loading book...
-        </div>
-      </div>
-    )
-  }
 
   if (!book) {
     return null

@@ -11,6 +11,7 @@ import {
   Minimize,
   X,
   Home,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -177,7 +178,7 @@ export function PDFReader({
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
-        
+
         if (e.deltaY < 0) {
           // Zoom in
           setScale((s) => Math.min(2, s + 0.1))
@@ -291,7 +292,10 @@ export function PDFReader({
       <Progress value={progressPercent} className="h-1 rounded-none" />
 
       {/* PDF Content */}
-      <main ref={mainRef} className="flex-1 flex justify-center items-start overflow-auto p-4 relative">
+      <main
+        ref={mainRef}
+        className="flex-1 flex justify-center items-start overflow-auto p-4 relative"
+      >
         {/* Equipped sticker decorations */}
         {stickerEmojis.length > 0 && (
           <>
@@ -336,14 +340,17 @@ export function PDFReader({
 
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
-            <div className="animate-pulse text-muted-foreground">
-              Loading PDF...
+            <div className="flex gap-1 animate-pulse text-muted-foreground">
+              <Loader2 /> Cargando PDF...
             </div>
           </div>
         )}
 
-        <div className="w-full max-w-full flex justify-center" style={{ userSelect: 'text' }}>
-          {PDFLib ? (
+        <div
+          className="w-full max-w-full flex justify-center"
+          style={{ userSelect: "text" }}
+        >
+          {PDFLib && (
             <PDFLib.Document
               file={book.file}
               onLoadSuccess={onDocumentLoadSuccess}
@@ -365,13 +372,15 @@ export function PDFReader({
                     scale={scale}
                     renderTextLayer={true}
                     className="reader-page text-black max-w-full"
-                    width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 32, 800 * scale) : undefined}
+                    width={
+                      typeof window !== "undefined"
+                        ? Math.min(window.innerWidth - 32, 800 * scale)
+                        : undefined
+                    }
                   />
                 </motion.div>
               </AnimatePresence>
             </PDFLib.Document>
-          ) : (
-            <div className="text-muted-foreground">Loading PDF renderer...</div>
           )}
         </div>
       </main>

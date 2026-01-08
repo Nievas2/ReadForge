@@ -124,6 +124,10 @@
   }
 }
 
+button {
+  @apply cursor-pointer;
+}
+
 .react-pdf__Page {
   background: white;
 }
