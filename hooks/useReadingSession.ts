@@ -1,4 +1,4 @@
-"use"
+"use client"
 import { useState, useCallback, useRef, useEffect } from "react"
 import type { ReadingSession } from "@/types"
 
@@ -38,6 +38,16 @@ export function useReadingSession({
   const lastRecordedTime = useRef<number | null>(null)
   const activityCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
+  // Estado para acciones pendientes (coins de página)
+  const [pendingPageActions, setPendingPageActions] = useState<{
+    coins: number
+    readingTime: number
+    pagesRead: number
+  } | null>(null)
+
+  // Estado para acciones pendientes (coins de tiempo)
+  const [pendingTimeCoins, setPendingTimeCoins] = useState<number>(0)
+
   useEffect(() => {
     if (lastRecordedTime.current === null) {
       lastRecordedTime.current = Date.now()
@@ -72,6 +82,32 @@ export function useReadingSession({
     }
   }, [])
 
+  // useEffect para ejecutar coins de tiempo
+  useEffect(() => {
+    if (pendingTimeCoins > 0) {
+      onCoinsEarned(pendingTimeCoins)
+      const raf = requestAnimationFrame(() => setPendingTimeCoins(0))
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [pendingTimeCoins, onCoinsEarned])
+
+  // useEffect para ejecutar acciones de página
+  useEffect(() => {
+    if (pendingPageActions) {
+      if (pendingPageActions.coins > 0) {
+        onCoinsEarned(pendingPageActions.coins)
+      }
+      if (pendingPageActions.pagesRead > 0) {
+        onRecordReading(
+          pendingPageActions.readingTime,
+          pendingPageActions.pagesRead
+        )
+      }
+      const raf = requestAnimationFrame(() => setPendingPageActions(null))
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [pendingPageActions, onCoinsEarned, onRecordReading])
+
   // Award time-based coins every minute (only when active)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -85,7 +121,7 @@ export function useReadingSession({
           const coinsToAdd = minutesElapsed * COINS_PER_MINUTE
 
           pendingCoins.current += coinsToAdd
-          onCoinsEarned(coinsToAdd)
+          setPendingTimeCoins(coinsToAdd)
           lastRecordedTime.current = Date.now()
 
           return {
@@ -98,61 +134,59 @@ export function useReadingSession({
     }, 10000) // Check every 10 seconds
 
     return () => clearInterval(interval)
-  }, [onCoinsEarned])
+  }, [])
 
-  const changePage = useCallback(
-    (newPage: number, totalPages: number) => {
-      setSession((prev) => {
-        const timeOnPage = (Date.now() - prev.pageStartTime) / 1000
-        let coinsToAdd = 0
-        let pagesReadCount = 0
+  const changePage = useCallback((newPage: number, totalPages: number) => {
+    setSession((prev) => {
+      const timeOnPage = (Date.now() - prev.pageStartTime) / 1000
+      let coinsToAdd = 0
+      let pagesReadCount = 0
 
-        // Only award page completion if enough time spent and user was active
-        if (
-          timeOnPage >= MIN_TIME_PER_PAGE &&
-          !prev.pagesRead.has(prev.currentPage)
-        ) {
-          coinsToAdd += COINS_PER_PAGE
-          pagesReadCount = 1
+      // Only award page completion if enough time spent and user was active
+      if (
+        timeOnPage >= MIN_TIME_PER_PAGE &&
+        !prev.pagesRead.has(prev.currentPage)
+      ) {
+        coinsToAdd += COINS_PER_PAGE
+        pagesReadCount = 1
 
-          // Milestone bonus
-          const newPagesRead = prev.pagesRead.size + 1
-          if (newPagesRead % 10 === 0) {
-            coinsToAdd += PAGE_MILESTONE_BONUS
-          }
-
-          // Book completion bonus
-          if (newPage === totalPages && !prev.pagesRead.has(totalPages)) {
-            coinsToAdd += BOOK_COMPLETION_BONUS
-          }
-
-          if (coinsToAdd > 0) {
-            onCoinsEarned(coinsToAdd)
-          }
-
-          if (pagesReadCount > 0) {
-            onRecordReading(Math.floor(timeOnPage), pagesReadCount)
-          }
+        // Milestone bonus
+        const newPagesRead = prev.pagesRead.size + 1
+        if (newPagesRead % 10 === 0) {
+          coinsToAdd += PAGE_MILESTONE_BONUS
         }
 
-        const newPagesRead = new Set(prev.pagesRead)
-        if (timeOnPage >= MIN_TIME_PER_PAGE) {
-          newPagesRead.add(prev.currentPage)
+        // Book completion bonus
+        if (newPage === totalPages && !prev.pagesRead.has(totalPages)) {
+          coinsToAdd += BOOK_COMPLETION_BONUS
         }
 
-        return {
-          ...prev,
-          currentPage: newPage,
-          pageStartTime: Date.now(),
-          pagesRead: newPagesRead,
-          coinsEarned: prev.coinsEarned + coinsToAdd,
-          lastActivityTime: Date.now(),
-          isActive: true,
+        // En lugar de llamar directamente, guardamos las acciones pendientes
+        if (coinsToAdd > 0 || pagesReadCount > 0) {
+          setPendingPageActions({
+            coins: coinsToAdd,
+            readingTime: Math.floor(timeOnPage),
+            pagesRead: pagesReadCount,
+          })
         }
-      })
-    },
-    [onCoinsEarned, onRecordReading]
-  )
+      }
+
+      const newPagesRead = new Set(prev.pagesRead)
+      if (timeOnPage >= MIN_TIME_PER_PAGE) {
+        newPagesRead.add(prev.currentPage)
+      }
+
+      return {
+        ...prev,
+        currentPage: newPage,
+        pageStartTime: Date.now(),
+        pagesRead: newPagesRead,
+        coinsEarned: prev.coinsEarned + coinsToAdd,
+        lastActivityTime: Date.now(),
+        isActive: true,
+      }
+    })
+  }, [])
 
   const endSession = useCallback(() => {
     const totalTime = Math.floor((Date.now() - session.startTime) / 1000)

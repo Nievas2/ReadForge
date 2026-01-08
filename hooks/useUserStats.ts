@@ -24,7 +24,7 @@ function getTodayDate(): string {
 export function useUserStats() {
   const [stats, setStats] = useState<UserStats>(DEFAULT_STATS)
 
-   useEffect(() => {
+  useEffect(() => {
     const loaded = loadFromStorage<UserStats>(STATS_KEY, DEFAULT_STATS)
     const today = getTodayDate()
     if (loaded.lastReadDate !== today) {
@@ -37,7 +37,6 @@ export function useUserStats() {
 
     return () => cancelAnimationFrame(raf)
   }, [])
-
 
   const updateStats = useCallback((updates: Partial<UserStats>) => {
     setStats((prev) => {
