@@ -7,45 +7,45 @@ const STICKERS_KEY = 'user_stickers';
 
 // All available stickers in the shop
 export const ALL_STICKERS: Sticker[] = [
-  // Book-themed (Common)
-  { id: 'book_open', name: 'Open Book', emoji: '📖', category: 'book', price: 50, rarity: 'common', description: 'A classic open book' },
-  { id: 'book_closed', name: 'Closed Book', emoji: '📕', category: 'book', price: 50, rarity: 'common', description: 'A beautiful red book' },
-  { id: 'bookmark', name: 'Bookmark', emoji: '🔖', category: 'book', price: 75, rarity: 'common', description: 'Never lose your page' },
-  { id: 'glasses', name: 'Reading Glasses', emoji: '👓', category: 'book', price: 100, rarity: 'common', description: 'For the studious reader' },
+  // Book-themed (common)
+  { id: 'book_open', name: 'Libro abierto', emoji: '📖', category: 'book', price: 50, rarity: 'common', description: 'Un clásico libro abierto' },
+  { id: 'book_closed', name: 'Libro cerrado', emoji: '📕', category: 'book', price: 50, rarity: 'common', description: 'Un hermoso libro rojo' },
+  { id: 'bookmark', name: 'Marcapáginas', emoji: '🔖', category: 'book', price: 75, rarity: 'common', description: 'Nunca pierdas tu página' },
+  { id: 'glasses', name: 'Anteojos para leer', emoji: '👓', category: 'book', price: 100, rarity: 'common', description: 'Para el lector estudioso' },
   
   // Book-themed (Rare)
-  { id: 'book_stack', name: 'Book Stack', emoji: '📚', category: 'book', price: 200, rarity: 'rare', description: 'A stack of knowledge' },
-  { id: 'quill', name: 'Quill Pen', emoji: '🪶', category: 'book', price: 250, rarity: 'rare', description: 'Write your own story' },
-  { id: 'scroll', name: 'Ancient Scroll', emoji: '📜', category: 'book', price: 300, rarity: 'rare', description: 'Wisdom of the ages' },
+  { id: 'book_stack', name: 'Pila de libros', emoji: '📚', category: 'book', price: 200, rarity: 'rare', description: 'Una pila de conocimiento' },
+  { id: 'quill', name: 'Pluma de escribir', emoji: '🪶', category: 'book', price: 250, rarity: 'rare', description: 'Escribe tu propia historia' },
+  { id: 'scroll', name: 'Pergamino antiguo', emoji: '📜', category: 'book', price: 300, rarity: 'rare', description: 'Sabiduría de los tiempos' },
   
-  // Cute Characters (Common)
-  { id: 'owl', name: 'Wise Owl', emoji: '🦉', category: 'character', price: 100, rarity: 'common', description: 'A wise reading companion' },
-  { id: 'cat', name: 'Reading Cat', emoji: '🐱', category: 'character', price: 100, rarity: 'common', description: 'Cozy reading buddy' },
-  { id: 'bunny', name: 'Bookworm Bunny', emoji: '🐰', category: 'character', price: 100, rarity: 'common', description: 'Hops through pages' },
+  // Cute Characters (common)
+  { id: 'owl', name: 'Búho sabio', emoji: '🦉', category: 'character', price: 100, rarity: 'common', description: 'Un compañero de lectura sabio' },
+  { id: 'cat', name: 'Gato lector', emoji: '🐱', category: 'character', price: 100, rarity: 'common', description: 'Compañero acogedor para leer' },
+  { id: 'bunny', name: 'Conejo ratón de biblioteca', emoji: '🐰', category: 'character', price: 100, rarity: 'common', description: 'Salta de página en página' },
   
   // Cute Characters (Rare)
-  { id: 'fox', name: 'Clever Fox', emoji: '🦊', category: 'character', price: 250, rarity: 'rare', description: 'Smart and swift' },
-  { id: 'dragon', name: 'Book Dragon', emoji: '🐉', category: 'character', price: 400, rarity: 'rare', description: 'Guards your library' },
+  { id: 'fox', name: 'Zorro astuto', emoji: '🦊', category: 'character', price: 250, rarity: 'rare', description: 'Inteligente y veloz' },
+  { id: 'dragon', name: 'Dragón de libros', emoji: '🐉', category: 'character', price: 400, rarity: 'rare', description: 'Guarda tu biblioteca' },
   
   // Cute Characters (Epic)
-  { id: 'unicorn', name: 'Magic Unicorn', emoji: '🦄', category: 'character', price: 600, rarity: 'epic', description: 'Brings magic to reading' },
-  { id: 'phoenix', name: 'Phoenix Reader', emoji: '🔥', category: 'character', price: 750, rarity: 'epic', description: 'Rises through stories' },
+  { id: 'unicorn', name: 'Unicornio mágico', emoji: '🦄', category: 'character', price: 600, rarity: 'epic', description: 'Aporta magia a la lectura' },
+  { id: 'phoenix', name: 'Lector fénix', emoji: '🔥', category: 'character', price: 750, rarity: 'epic', description: 'Resurge a través de las historias' },
   
-  // Achievement Badges (Common)
-  { id: 'star', name: 'Gold Star', emoji: '⭐', category: 'achievement', price: 75, rarity: 'common', description: 'You did great!' },
-  { id: 'medal', name: 'Reader Medal', emoji: '🏅', category: 'achievement', price: 100, rarity: 'common', description: 'First place reader' },
+  // Achievement Badges (common)
+  { id: 'star', name: 'Estrella dorada', emoji: '⭐', category: 'achievement', price: 75, rarity: 'common', description: '¡Lo hiciste genial!' },
+  { id: 'medal', name: 'Medalla de lector', emoji: '🏅', category: 'achievement', price: 100, rarity: 'common', description: 'Primer puesto como lector' },
   
   // Achievement Badges (Rare)
-  { id: 'trophy', name: 'Champion Trophy', emoji: '🏆', category: 'achievement', price: 300, rarity: 'rare', description: 'Reading champion' },
-  { id: 'crown', name: 'Royal Crown', emoji: '👑', category: 'achievement', price: 350, rarity: 'rare', description: 'Royalty of readers' },
+  { id: 'trophy', name: 'Trofeo de campeón', emoji: '🏆', category: 'achievement', price: 300, rarity: 'rare', description: 'Campeón de lectura' },
+  { id: 'crown', name: 'Corona real', emoji: '👑', category: 'achievement', price: 350, rarity: 'rare', description: 'Realeza de los lectores' },
   
   // Achievement Badges (Epic)
-  { id: 'diamond', name: 'Diamond Reader', emoji: '💎', category: 'achievement', price: 500, rarity: 'epic', description: 'Precious achievement' },
-  { id: 'rocket', name: 'Rocket Reader', emoji: '🚀', category: 'achievement', price: 600, rarity: 'epic', description: 'Sky-high reading' },
+  { id: 'diamond', name: 'Lector diamante', emoji: '💎', category: 'achievement', price: 500, rarity: 'epic', description: 'Logro precioso' },
+  { id: 'rocket', name: 'Lector cohete', emoji: '🚀', category: 'achievement', price: 600, rarity: 'epic', description: 'Lectura que llega al cielo' },
   
   // Achievement Badges (Legendary)
-  { id: 'infinity', name: 'Infinite Reader', emoji: '♾️', category: 'achievement', price: 1000, rarity: 'legendary', description: 'Endless dedication' },
-  { id: 'sparkles', name: 'Legendary Sparkles', emoji: '✨', category: 'achievement', price: 1200, rarity: 'legendary', description: 'Pure magic' },
+  { id: 'infinity', name: 'Lector infinito', emoji: '♾️', category: 'achievement', price: 1000, rarity: 'legendary', description: 'Dedicación sin fin' },
+  { id: 'sparkles', name: 'Destellos legendarys', emoji: '✨', category: 'achievement', price: 1200, rarity: 'legendary', description: 'Pura magia' },
 ];
 
 const DEFAULT_STICKERS: UserStickers = {

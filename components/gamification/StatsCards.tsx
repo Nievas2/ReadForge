@@ -36,7 +36,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Target className="w-4 h-4" />
-              Daily Goal
+              Objetivo Diario
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -61,7 +61,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Total Time
+              Tiempo de lectura
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -82,7 +82,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              Pages Read
+              Páginas leídas
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -103,7 +103,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Trophy className="w-4 h-4" />
-              Completed
+              Libros completados
             </CardTitle>
           </CardHeader>
           <CardContent>

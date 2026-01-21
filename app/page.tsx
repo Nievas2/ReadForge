@@ -125,7 +125,7 @@ export default function Dashboard() {
         {/* Library */}
         <section>
           <h2 className="font-display text-2xl font-semibold mb-6">
-            Your Library
+            Tu libreria
           </h2>
           <BookLibrary
             books={books}
@@ -142,7 +142,7 @@ export default function Dashboard() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">
-              Sticker Shop
+              Tienda de Stickers
             </DialogTitle>
           </DialogHeader>
 
@@ -151,10 +151,10 @@ export default function Dashboard() {
             onValueChange={(v) => setStickerCategory(v as any)}
           >
             <TabsList className="mb-6">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="book">📚 Books</TabsTrigger>
-              <TabsTrigger value="character">🐾 Characters</TabsTrigger>
-              <TabsTrigger value="achievement">🏆 Badges</TabsTrigger>
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="book">📚 Libros</TabsTrigger>
+              <TabsTrigger value="character">🐾 Personajes</TabsTrigger>
+              <TabsTrigger value="achievement">🏆 Logros</TabsTrigger>
             </TabsList>
 
             <TabsContent value={stickerCategory}>

@@ -52,10 +52,10 @@ export function PDFDropZone({ onFileAccepted, className }: PDFDropZoneProps) {
       
       <div className="text-center space-y-2">
         <p className="font-medium text-foreground">
-          {isDragActive ? 'Drop your PDF here' : 'Drag & drop a PDF'}
+          {isDragActive ? 'Suelta tu PDF aquí' : 'Arrastra y suelta tu PDF aquí'}
         </p>
         <p className="text-sm text-muted-foreground">
-          or click to browse your files
+          O haz clic para seleccionar un archivo
         </p>
       </div>
     </div>

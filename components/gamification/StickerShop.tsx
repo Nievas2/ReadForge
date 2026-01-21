@@ -18,9 +18,9 @@ interface StickerCardProps {
 
 const rarityColors = {
   common: "bg-secondary text-secondary-foreground",
-  rare: "bg-progress/20 text-progress",
-  epic: "bg-accent/20 text-accent",
-  legendary: "bg-coin/20 text-coin",
+  rare: "bg-blue-400 text-progress",
+  epic: "bg-purple-400 text-progress",
+  legendary: "bg-yellow-400 text-white",
 }
 
 export function StickerCard({

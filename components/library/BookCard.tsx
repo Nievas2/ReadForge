@@ -56,7 +56,7 @@ export function BookCard({ book, progress, onRead, onDelete }: BookCardProps) {
             <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-background/90 to-transparent p-3">
               <Progress value={progressPercent} className="h-1.5" />
               <p className="text-xs text-muted-foreground mt-1">
-                {progressPercent}% complete
+                {progressPercent}% completado
               </p>
             </div>
           )}

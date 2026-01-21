@@ -95,8 +95,8 @@ export default function ReaderPage() {
     if (page >= total) {
       completeBook()
       toast({
-        title: "🎉 Book Completed!",
-        description: `You've earned ${50} bonus coins!`,
+        title: "🎉 Libro terminado",
+        description: `¡Felicidades por completar la lectura de "${book?.name}"!`,
       })
     }
   }

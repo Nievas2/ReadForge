@@ -48,7 +48,7 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
         'text-sm',
         isActive ? 'text-streak/70' : 'text-muted-foreground'
       )}>
-        {streak === 1 ? 'day' : 'days'}
+        {streak === 1 ? 'Dia' : 'Dias'}
       </span>
     </motion.div>
   );

@@ -33,10 +33,10 @@ export function Header({
           </div>
           <div>
             <h1 className="font-display text-xl font-semibold tracking-tight">
-              ReadQuest
+              ReadForge
             </h1>
             <p className="text-xs text-muted-foreground hidden sm:block">
-              Read. Earn. Collect.
+              Leé. Gana y colecciona.
             </p>
           </div>
         </div>
@@ -53,7 +53,7 @@ export function Header({
             className="gap-2"
           >
             <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Shop</span>
+            <span className="hidden sm:inline">Tienda</span>
           </Button>
 
           <Button variant="ghost" size="icon" onClick={onToggleTheme}>
