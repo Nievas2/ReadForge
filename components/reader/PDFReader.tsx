@@ -12,6 +12,9 @@ import {
   X,
   Home,
   Loader2,
+  Highlighter,
+  Download,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -19,10 +22,13 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { CoinDisplay } from "@/components/gamification/CoinDisplay"
 import { useReadingSession } from "@/hooks/useReadingSession"
-import type { PDFBook, ReadingProgress } from "@/types"
+import { useAnnotations } from "@/hooks/useAnnotations"
+import type { PDFBook, ReadingProgress, HighlightRect } from "@/types"
 
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
+import { PDFHighlightLayer } from "@/components/PDFHighlighhtLayer"
+import { exportAnnotatedPDF } from "@/lib/exportAnnotatedPDF"
 
 interface PDFReaderProps {
   book: PDFBook
@@ -35,6 +41,14 @@ interface PDFReaderProps {
   onRecordReading: (time: number, pages: number) => void
   onBookUpdate: (bookId: string, updates: Partial<PDFBook>) => void
 }
+
+const HIGHLIGHT_COLORS = [
+  { name: 'Amarillo', value: '#ffeb3b' },
+  { name: 'Verde', value: '#4caf50' },
+  { name: 'Azul', value: '#2196f3' },
+  { name: 'Rosa', value: '#e91e63' },
+  { name: 'Naranja', value: '#ff9800' },
+];
 
 export function PDFReader({
   book,
@@ -55,13 +69,25 @@ export function PDFReader({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [pageInputValue, setPageInputValue] = useState(String(pageNumber))
   const [isLoading, setIsLoading] = useState(true)
+  const [showHighlightTools, setShowHighlightTools] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const mainRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLDivElement>(null)
 
   const { recordActivity, changePage } = useReadingSession({
     bookId: book.id,
     onCoinsEarned,
     onRecordReading,
   })
+
+  const {
+    highlights,
+    selectedColor,
+    setSelectedColor,
+    addHighlight,
+    removeHighlight,
+    clearAllHighlights,
+  } = useAnnotations(book.id)
 
   // Track activity
   useEffect(() => {
@@ -80,12 +106,48 @@ export function PDFReader({
     }
   }, [recordActivity])
 
+  // Handle text selection for highlighting
+  useEffect(() => {
+    const handleSelection = () => {
+      if (!showHighlightTools) return;
+
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) return;
+
+      const range = selection.getRangeAt(0);
+      const selectedText = selection.toString().trim();
+      
+      if (selectedText.length < 3) return;
+
+      // Get bounding rectangles
+      const rects = Array.from(range.getClientRects());
+      const pageElement = pageRef.current;
+      
+      if (!pageElement || rects.length === 0) return;
+
+      const pageRect = pageElement.getBoundingClientRect();
+      
+      // Convert to relative coordinates
+      const highlightRects: HighlightRect[] = rects.map(rect => ({
+        x: (rect.left - pageRect.left) / scale,
+        y: (rect.top - pageRect.top) / scale,
+        width: rect.width / scale,
+        height: rect.height / scale,
+      }));
+
+      addHighlight(pageNumber, highlightRects, selectedText);
+      selection.removeAllRanges();
+    };
+
+    document.addEventListener('mouseup', handleSelection);
+    return () => document.removeEventListener('mouseup', handleSelection);
+  }, [showHighlightTools, pageNumber, scale, addHighlight]);
+
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
       setNumPages(numPages)
       setIsLoading(false)
 
-      // Update book with total pages if not set
       if (book.totalPages !== numPages) {
         onBookUpdate(book.id, { totalPages: numPages })
       }
@@ -137,10 +199,20 @@ export function PDFReader({
     }
   }, [])
 
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      await exportAnnotatedPDF(book.file, highlights, book.name);
+    } catch (error) {
+      alert('Error al exportar el PDF. Por favor intenta nuevamente.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const progressPercent =
     numPages > 0 ? Math.round((pageNumber / numPages) * 100) : 0
 
-  // Get sticker emojis for decoration
   const stickerEmojis = equippedStickers.slice(0, 4)
 
   // Keyboard navigation
@@ -158,6 +230,8 @@ export function PDFReader({
         } else {
           onClose()
         }
+      } else if (e.key === "h" || e.key === "H") {
+        setShowHighlightTools(prev => !prev)
       }
     }
 
@@ -173,17 +247,14 @@ export function PDFReader({
     onClose,
   ])
 
-  // Ctrl + wheel zoom handler
+  // Ctrl + wheel zoom
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
-
         if (e.deltaY < 0) {
-          // Zoom in
           setScale((s) => Math.min(2, s + 0.1))
         } else {
-          // Zoom out
           setScale((s) => Math.max(0.5, s - 0.1))
         }
       }
@@ -201,7 +272,7 @@ export function PDFReader({
     }
   }, [])
 
-  // Dynamic load react-pdf to avoid server-side evaluation (DOMMatrix error)
+  // Dynamic load react-pdf
   const [PDFLib, setPDFLib] = useState<null | {
     Document: any
     Page: any
@@ -213,7 +284,6 @@ export function PDFReader({
     import("react-pdf")
       .then((mod) => {
         if (!mounted) return
-        // set worker after loading pdfjs
         mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`
         setPDFLib({ Document: mod.Document, Page: mod.Page, pdfjs: mod.pdfjs })
       })
@@ -254,6 +324,33 @@ export function PDFReader({
         <div className="flex items-center gap-2">
           <CoinDisplay coins={coins} showAnimation={false} />
 
+          {/* Highlight tools */}
+          <Button
+            variant={showHighlightTools ? "default" : "ghost"}
+            size="icon"
+            onClick={() => setShowHighlightTools(!showHighlightTools)}
+            title="Herramientas de subrayado (H)"
+          >
+            <Highlighter className="w-4 h-4" />
+          </Button>
+
+          {/* Export button */}
+          {highlights.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              title="Descargar PDF subrayado"
+            >
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+
           <div className="hidden sm:flex items-center gap-1 ml-4">
             <Button
               variant="ghost"
@@ -288,6 +385,53 @@ export function PDFReader({
         </div>
       </header>
 
+      {/* Highlight toolbar */}
+      <AnimatePresence>
+        {showHighlightTools && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-b bg-card/80 backdrop-blur-sm overflow-hidden"
+          >
+            <div className="px-4 py-3 flex items-center gap-4">
+              <span className="text-sm font-medium">Colores:</span>
+              <div className="flex gap-2">
+                {HIGHLIGHT_COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => setSelectedColor(color.value)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-all",
+                      selectedColor === color.value
+                        ? "border-foreground scale-110"
+                        : "border-transparent hover:scale-105"
+                    )}
+                    style={{ backgroundColor: color.value }}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+              <div className="flex-1" />
+              <span className="text-sm text-muted-foreground">
+                {highlights.length} subrayados
+              </span>
+              {highlights.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllHighlights}
+                  className="gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Limpiar todo
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Progress bar */}
       <Progress value={progressPercent} className="h-1 rounded-none" />
 
@@ -296,7 +440,7 @@ export function PDFReader({
         ref={mainRef}
         className="flex-1 flex justify-center items-start overflow-auto p-4 relative"
       >
-        {/* Equipped sticker decorations */}
+        {/* Stickers */}
         {stickerEmojis.length > 0 && (
           <>
             {stickerEmojis[0] && (
@@ -340,15 +484,16 @@ export function PDFReader({
 
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
-            <div className="flex gap-1 animate-pulse text-muted-foreground">
-              <Loader2 /> Cargando PDF...
+            <div className="flex gap-2 items-center text-muted-foreground">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Cargando PDF...</span>
             </div>
           </div>
         )}
 
         <div
           className="w-full max-w-full flex justify-center"
-          style={{ userSelect: "text" }}
+          style={{ userSelect: showHighlightTools ? "text" : "none" }}
         >
           {PDFLib && (
             <PDFLib.Document
@@ -364,20 +509,34 @@ export function PDFReader({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.15 }}
-                  className="w-full flex justify-center"
+                  className="w-full flex justify-center relative"
+                  ref={pageRef}
                 >
-                  <PDFLib.Page
-                    pageNumber={pageNumber}
-                    renderAnnotationLayer={false}
-                    scale={scale}
-                    renderTextLayer={true}
-                    className="reader-page text-black max-w-full"
-                    width={
-                      typeof window !== "undefined"
-                        ? Math.min(window.innerWidth - 32, 800 * scale)
-                        : undefined
-                    }
-                  />
+                  <div className="relative">
+                    <PDFLib.Page
+                      pageNumber={pageNumber}
+                      renderAnnotationLayer={false}
+                      scale={scale}
+                      renderTextLayer={true}
+                      className="reader-page text-black max-w-full"
+                      width={
+                        typeof window !== "undefined"
+                          ? Math.min(window.innerWidth - 32, 800 * scale)
+                          : undefined
+                      }
+                    />
+                    {/* Highlight overlay */}
+                    <PDFHighlightLayer
+                      highlights={highlights}
+                      pageNumber={pageNumber}
+                      scale={scale}
+                      onHighlightClick={(h) => {
+                        if (window.confirm('¿Eliminar este subrayado?')) {
+                          removeHighlight(h.id);
+                        }
+                      }}
+                    />
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </PDFLib.Document>
@@ -394,7 +553,7 @@ export function PDFReader({
           className="gap-2"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Previous</span>
+          <span className="hidden sm:inline">Anterior</span>
         </Button>
 
         <form onSubmit={handlePageInput} className="flex items-center gap-2">
@@ -417,7 +576,7 @@ export function PDFReader({
           disabled={pageNumber >= numPages}
           className="gap-2"
         >
-          <span className="hidden sm:inline">Next</span>
+          <span className="hidden sm:inline">Siguiente</span>
           <ChevronRight className="w-4 h-4" />
         </Button>
       </footer>
