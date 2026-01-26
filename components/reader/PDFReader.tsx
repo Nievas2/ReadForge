@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import { useState, useCallback, useEffect, SetStateAction, useRef } from "react"
+import { useState, useCallback, useEffect, SetStateAction, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronLeft,
@@ -43,12 +43,12 @@ interface PDFReaderProps {
 }
 
 const HIGHLIGHT_COLORS = [
-  { name: 'Amarillo', value: '#ffeb3b' },
-  { name: 'Verde', value: '#4caf50' },
-  { name: 'Azul', value: '#2196f3' },
-  { name: 'Rosa', value: '#e91e63' },
-  { name: 'Naranja', value: '#ff9800' },
-];
+  { name: "Amarillo", value: "#ffeb3b" },
+  { name: "Verde", value: "#4caf50" },
+  { name: "Azul", value: "#2196f3" },
+  { name: "Rosa", value: "#e91e63" },
+  { name: "Naranja", value: "#ff9800" },
+]
 
 export function PDFReader({
   book,
@@ -63,7 +63,7 @@ export function PDFReader({
 }: PDFReaderProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [pageNumber, setPageNumber] = useState(
-    initialProgress?.currentPage || 1
+    initialProgress?.currentPage || 1,
   )
   const [scale, setScale] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -109,45 +109,45 @@ export function PDFReader({
   // Handle text selection for highlighting
   useEffect(() => {
     const handleSelection = () => {
-      if (!showHighlightTools) return;
+      if (!showHighlightTools) return
 
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed) return;
+      const selection = window.getSelection()
+      if (!selection || selection.isCollapsed) return
 
-      const range = selection.getRangeAt(0);
-      const selectedText = selection.toString().trim();
-      
-      if (selectedText.length < 3) return;
+      const range = selection.getRangeAt(0)
+      const selectedText = selection.toString().trim()
+
+      if (selectedText.length < 3) return
 
       // Get bounding rectangles
-      const rects = Array.from(range.getClientRects());
-      const pageElement = pageRef.current;
-      
-      if (!pageElement || rects.length === 0) return;
+      const rects = Array.from(range.getClientRects())
+      const pageElement = pageRef.current
 
-      const pageRect = pageElement.getBoundingClientRect();
-      
+      if (!pageElement || rects.length === 0) return
+
+      const pageRect = pageElement.getBoundingClientRect()
+
       // Encontrar el canvas del PDF para obtener dimensiones reales
-      const canvas = pageElement.querySelector('canvas');
-      if (!canvas) return;
+      const canvas = pageElement.querySelector("canvas")
+      if (!canvas) return
 
-      const canvasRect = canvas.getBoundingClientRect();
-      
+      const canvasRect = canvas.getBoundingClientRect()
+
       // Normalizar coordenadas: convertir a porcentajes del canvas real
-      const highlightRects: HighlightRect[] = rects.map(rect => ({
+      const highlightRects: HighlightRect[] = rects.map((rect) => ({
         x: ((rect.left - canvasRect.left) / canvasRect.width) * 100,
         y: ((rect.top - canvasRect.top) / canvasRect.height) * 100,
         width: (rect.width / canvasRect.width) * 100,
         height: (rect.height / canvasRect.height) * 100,
-      }));
+      }))
 
-      addHighlight(pageNumber, highlightRects, selectedText);
-      selection.removeAllRanges();
-    };
+      addHighlight(pageNumber, highlightRects, selectedText)
+      selection.removeAllRanges()
+    }
 
-    document.addEventListener('mouseup', handleSelection);
-    return () => document.removeEventListener('mouseup', handleSelection);
-  }, [showHighlightTools, pageNumber, addHighlight]);
+    document.addEventListener("mouseup", handleSelection)
+    return () => document.removeEventListener("mouseup", handleSelection)
+  }, [showHighlightTools, pageNumber, addHighlight])
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
@@ -158,7 +158,7 @@ export function PDFReader({
         onBookUpdate(book.id, { totalPages: numPages })
       }
     },
-    [book.id, book.totalPages, onBookUpdate]
+    [book.id, book.totalPages, onBookUpdate],
   )
 
   const goToPage = useCallback(
@@ -169,7 +169,7 @@ export function PDFReader({
       setPageInputValue(String(newPage))
       onProgressUpdate(book.id, newPage, numPages)
     },
-    [numPages, book.id, changePage, onProgressUpdate]
+    [numPages, book.id, changePage, onProgressUpdate],
   )
 
   const goToNextPage = useCallback(() => {
@@ -192,7 +192,7 @@ export function PDFReader({
         goToPage(page)
       }
     },
-    [pageInputValue, goToPage]
+    [pageInputValue, goToPage],
   )
 
   const toggleFullscreen = useCallback(() => {
@@ -206,15 +206,26 @@ export function PDFReader({
   }, [])
 
   const handleExportPDF = async () => {
-    setIsExporting(true);
+    setIsExporting(true)
     try {
-      await exportAnnotatedPDF(book.file, highlights, book.name);
+      // Si book.file está muerto, intentamos recuperarlo de la DB antes de fallar
+      let bufferToUse = book.file
+      if (bufferToUse.byteLength === 0) {
+        const { getBook } = await import("@/lib/db")
+        const freshBook = await getBook(book.id)
+        if (freshBook) bufferToUse = freshBook.file
+      }
+
+      await exportAnnotatedPDF(bufferToUse, highlights, book.name)
     } catch (error) {
-      alert('Error al exportar el PDF. Por favor intenta nuevamente.');
+      console.error(error)
+      alert(
+        "Error al exportar: El archivo está en uso por el lector. Intenta recargar.",
+      )
     } finally {
-      setIsExporting(false);
+      setIsExporting(false)
     }
-  };
+  }
 
   const progressPercent =
     numPages > 0 ? Math.round((pageNumber / numPages) * 100) : 0
@@ -237,7 +248,7 @@ export function PDFReader({
           onClose()
         }
       } else if (e.key === "h" || e.key === "H") {
-        setShowHighlightTools(prev => !prev)
+        setShowHighlightTools((prev) => !prev)
       }
     }
 
@@ -301,6 +312,18 @@ export function PDFReader({
     }
   }, [])
 
+  const memorizedFile = useMemo(() => {
+    try {
+      if (book.file && book.file.byteLength > 0) {
+        return book.file.slice(0); // Creamos la copia aquí
+      }
+      return book.file;
+    } catch (e) {
+      console.error("Error al copiar el buffer para el visor", e);
+      return book.file;
+    }
+  }, [book.file, book.id]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -308,7 +331,7 @@ export function PDFReader({
       exit={{ opacity: 0 }}
       className={cn(
         "fixed inset-0 z-50 bg-background flex flex-col",
-        isFullscreen && "bg-[hsl(var(--reader-bg))]"
+        isFullscreen && "bg-[hsl(var(--reader-bg))]",
       )}
     >
       {/* Header */}
@@ -396,7 +419,7 @@ export function PDFReader({
         {showHighlightTools && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="border-b bg-card/80 backdrop-blur-sm overflow-hidden"
           >
@@ -411,7 +434,7 @@ export function PDFReader({
                       "w-8 h-8 rounded-full border-2 transition-all",
                       selectedColor === color.value
                         ? "border-foreground scale-110"
-                        : "border-transparent hover:scale-105"
+                        : "border-transparent hover:scale-105",
                     )}
                     style={{ backgroundColor: color.value }}
                     title={color.name}
@@ -503,7 +526,7 @@ export function PDFReader({
         >
           {PDFLib && (
             <PDFLib.Document
-              file={book.file}
+              file={memorizedFile}
               onLoadSuccess={onDocumentLoadSuccess}
               loading={null}
               className="shadow-2xl"
@@ -537,8 +560,8 @@ export function PDFReader({
                       pageNumber={pageNumber}
                       scale={scale}
                       onHighlightClick={(h) => {
-                        if (window.confirm('¿Eliminar este subrayado?')) {
-                          removeHighlight(h.id);
+                        if (window.confirm("¿Eliminar este subrayado?")) {
+                          removeHighlight(h.id)
                         }
                       }}
                     />

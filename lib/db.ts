@@ -48,15 +48,25 @@ export async function getDB(): Promise<IDBPDatabase<ReadQuestDB>> {
 // Book operations
 export async function saveBook(book: PDFBook): Promise<void> {
   const db = await getDB()
+  const existingBook = await db.get("books", book.id)
 
-  // Clonar el ArrayBuffer para evitar errores de "detached ArrayBuffer"
-  // Esto sucede cuando pdf-lib u otras librerías transfieren el buffer
-  const bookToSave = {
-    ...book,
-    file: book.file instanceof ArrayBuffer ? book.file.slice(0) : book.file,
+  let fileToSave: ArrayBuffer | null = null
+
+  if (book.file instanceof ArrayBuffer && book.file.byteLength > 0) {
+    fileToSave = book.file.slice(0)
+  } else if (existingBook && existingBook.file instanceof ArrayBuffer) {
+    fileToSave = existingBook.file // Reutilizamos el que ya está en DB
   }
 
-  await db.put("books", bookToSave)
+  if (!fileToSave) {
+    throw new Error("Archivo no disponible")
+  }
+
+  // IMPORTANTE: Clonamos el objeto pero inyectamos el buffer sano
+  await db.put("books", {
+    ...book,
+    file: fileToSave,
+  })
 }
 
 export async function getBook(id: string): Promise<PDFBook | undefined> {

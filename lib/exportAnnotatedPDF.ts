@@ -6,12 +6,13 @@ export async function exportAnnotatedPDF(
   highlights: Highlight[],
   fileName: string,
 ): Promise<void> {
+  // Verificación de seguridad inmediata
+  if (originalPDF.byteLength === 0) {
+    throw new Error("El buffer del PDF está vacío o desprendido.")
+  }
   try {
-    // Clonar el ArrayBuffer para evitar que se "detache"
-    const clonedBuffer = originalPDF.slice(0)
-
     // Cargar el PDF original
-    const pdfDoc = await PDFDocument.load(clonedBuffer)
+    const pdfDoc = await PDFDocument.load(new Uint8Array(originalPDF))
     const pages = pdfDoc.getPages()
 
     // Aplicar highlights a cada página
@@ -52,7 +53,7 @@ export async function exportAnnotatedPDF(
 
     const a = document.createElement("a")
     a.href = url
-    a.download = `${fileName}_highlighted.pdf`
+    a.download = `${fileName}_ReadForge.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
