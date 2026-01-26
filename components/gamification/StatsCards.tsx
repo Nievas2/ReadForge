@@ -1,28 +1,26 @@
-import { Progress } from '@/components/ui/progress';
-import { Clock, BookOpen, Trophy, Target } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import type { UserStats } from '@/types';
-
-interface StatsCardsProps {
-  stats: UserStats;
-}
+"use client"
+import { Progress } from "@/components/ui/progress"
+import { Clock, BookOpen, Trophy, Target } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
+import { useUserStats } from "@/hooks/useUserStats"
 
 function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  
+  const hours = Math.floor(seconds / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+
   if (hours > 0) {
-    return `${hours}h ${mins}m`;
+    return `${hours}h ${mins}m`
   }
-  return `${mins}m`;
+  return `${mins}m`
 }
 
-export function StatsCards({ stats }: StatsCardsProps) {
+export function StatsCards() {
+  const { stats } = useUserStats()
   const dailyGoalPercent = Math.min(
     100,
-    Math.round((stats.todayReadingTime / 60 / stats.dailyGoalMinutes) * 100)
-  );
+    Math.round((stats.todayReadingTime / 60 / stats.dailyGoalMinutes) * 100),
+  )
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -114,5 +112,5 @@ export function StatsCards({ stats }: StatsCardsProps) {
         </Card>
       </motion.div>
     </div>
-  );
+  )
 }

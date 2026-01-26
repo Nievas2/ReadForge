@@ -124,9 +124,7 @@ export function PDFReader({
       const pageElement = pageRef.current
 
       if (!pageElement || rects.length === 0) return
-
-      const pageRect = pageElement.getBoundingClientRect()
-
+      
       // Encontrar el canvas del PDF para obtener dimensiones reales
       const canvas = pageElement.querySelector("canvas")
       if (!canvas) return
@@ -322,7 +320,7 @@ export function PDFReader({
       console.error("Error al copiar el buffer para el visor", e);
       return book.file;
     }
-  }, [book.file, book.id]);
+  }, [book.file]);
 
   return (
     <motion.div

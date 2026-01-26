@@ -1,24 +1,59 @@
+"use client"
 import { AnimatePresence, motion } from "framer-motion"
 import { BookOpen } from "lucide-react"
 import { BookCard } from "./BookCard"
 import { PDFDropZone } from "./PDFDropZone"
-import type { PDFBook, ReadingProgress } from "@/types"
+import type { PDFBook } from "@/types"
+import { useBooks } from "@/hooks/useBooks"
+import { useCallback, useMemo } from "react"
+import { useProgress } from "@/hooks/useProgress"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
-interface BookLibraryProps {
-  books: PDFBook[]
-  progressMap: Map<string, ReadingProgress>
-  onAddBook: (file: File) => void
-  onReadBook: (book: PDFBook) => void
-  onDeleteBook: (bookId: string) => void
-}
+export function BookLibrary() {
+  const { books, addBook, deleteBook } = useBooks()
+  const { allProgress } = useProgress()
+  const { toast } = useToast()
+  const router = useRouter()
 
-export function BookLibrary({
-  books,
-  progressMap,
-  onAddBook,
-  onReadBook,
-  onDeleteBook,
-}: BookLibraryProps) {
+  // Create progress map for library
+  const progressMap = useMemo(() => {
+    const map = new Map()
+    allProgress.forEach((p) => map.set(p.bookId, p))
+    return map
+  }, [allProgress])
+
+  const handleAddBook = useCallback(
+    async (file: File) => {
+      const book = await addBook(file)
+      if (book) {
+        toast({
+          title: "Libro Agregado",
+          description: `"${book.name}" fue agregado a tu libreria.`,
+        })
+      }
+    },
+    [addBook, toast],
+  )
+
+  const handleReadBook = useCallback(
+    (book: PDFBook) => {
+      router.push(`/reader/${book.id}`)
+    },
+    [router],
+  )
+
+  const handleDeleteBook = useCallback(
+    (bookId: string) => {
+      deleteBook(bookId)
+      toast({
+        title: "Book Removed",
+        description: "The book has been removed from your library.",
+      })
+    },
+    [deleteBook, toast],
+  )
+
   if (books.length === 0) {
     return (
       <motion.div
@@ -36,7 +71,7 @@ export function BookLibrary({
           Agrega libros en formato PDF para comenzar a leer y realizar un
           seguimiento de tu progreso.
         </p>
-        <PDFDropZone onFileAccepted={onAddBook} className="max-w-md w-full" />
+        <PDFDropZone onFileAccepted={handleAddBook} className="max-w-md w-full" />
       </motion.div>
     )
   }
@@ -44,7 +79,7 @@ export function BookLibrary({
   return (
     <div className="space-y-8">
       {/* Add new book */}
-      <PDFDropZone onFileAccepted={onAddBook} className="max-w-2xl mx-auto" />
+      <PDFDropZone onFileAccepted={handleAddBook} className="max-w-2xl mx-auto" />
 
       {/* Book grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3  xl:grid-cols-4 gap-4 md:gap-6">
@@ -54,8 +89,8 @@ export function BookLibrary({
               key={book.id}
               book={book}
               progress={progressMap.get(book.id)}
-              onRead={onReadBook}
-              onDelete={onDeleteBook}
+              onRead={handleReadBook}
+              onDelete={handleDeleteBook}
             />
           ))}
         </AnimatePresence>

@@ -25,7 +25,7 @@ let dbPromise: Promise<IDBPDatabase<ReadQuestDB>> | null = null
 export async function getDB(): Promise<IDBPDatabase<ReadQuestDB>> {
   if (!dbPromise) {
     dbPromise = openDB<ReadQuestDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
+      upgrade(db) {
         // Books store
         if (!db.objectStoreNames.contains("books")) {
           const bookStore = db.createObjectStore("books", { keyPath: "id" })
@@ -115,11 +115,4 @@ export async function getAnnotations(
 ): Promise<Annotation | undefined> {
   const db = await getDB()
   return db.get("annotations", bookId)
-}
-
-// Generate cover image from first page
-export async function generateCover(file: ArrayBuffer): Promise<string> {
-  return new Promise((resolve) => {
-    resolve("")
-  })
 }
