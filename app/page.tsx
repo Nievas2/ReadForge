@@ -48,8 +48,8 @@ export default function Dashboard() {
       const book = await addBook(file)
       if (book) {
         toast({
-          title: "Book Added",
-          description: `"${book.name}" has been added to your library.`,
+          title: "Libro Agregado",
+          description: `"${book.name}" fue agregado a tu libreria.`,
         })
       }
     },

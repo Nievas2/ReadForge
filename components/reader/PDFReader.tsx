@@ -127,12 +127,18 @@ export function PDFReader({
 
       const pageRect = pageElement.getBoundingClientRect();
       
-      // Convert to relative coordinates
+      // Encontrar el canvas del PDF para obtener dimensiones reales
+      const canvas = pageElement.querySelector('canvas');
+      if (!canvas) return;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      
+      // Normalizar coordenadas: convertir a porcentajes del canvas real
       const highlightRects: HighlightRect[] = rects.map(rect => ({
-        x: (rect.left - pageRect.left) / scale,
-        y: (rect.top - pageRect.top) / scale,
-        width: rect.width / scale,
-        height: rect.height / scale,
+        x: ((rect.left - canvasRect.left) / canvasRect.width) * 100,
+        y: ((rect.top - canvasRect.top) / canvasRect.height) * 100,
+        width: (rect.width / canvasRect.width) * 100,
+        height: (rect.height / canvasRect.height) * 100,
       }));
 
       addHighlight(pageNumber, highlightRects, selectedText);
@@ -141,7 +147,7 @@ export function PDFReader({
 
     document.addEventListener('mouseup', handleSelection);
     return () => document.removeEventListener('mouseup', handleSelection);
-  }, [showHighlightTools, pageNumber, scale, addHighlight]);
+  }, [showHighlightTools, pageNumber, addHighlight]);
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {

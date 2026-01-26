@@ -18,7 +18,7 @@ interface ReadQuestDB extends DBSchema {
 }
 
 const DB_NAME = "readquest-db"
-const DB_VERSION = 2 // Incrementar versión
+const DB_VERSION = 2
 
 let dbPromise: Promise<IDBPDatabase<ReadQuestDB>> | null = null
 
@@ -35,7 +35,7 @@ export async function getDB(): Promise<IDBPDatabase<ReadQuestDB>> {
         if (!db.objectStoreNames.contains("progress")) {
           db.createObjectStore("progress", { keyPath: "bookId" })
         }
-        // Annotations store (nueva)
+        // Annotations store
         if (!db.objectStoreNames.contains("annotations")) {
           db.createObjectStore("annotations", { keyPath: "bookId" })
         }
@@ -48,7 +48,15 @@ export async function getDB(): Promise<IDBPDatabase<ReadQuestDB>> {
 // Book operations
 export async function saveBook(book: PDFBook): Promise<void> {
   const db = await getDB()
-  await db.put("books", book)
+
+  // Clonar el ArrayBuffer para evitar errores de "detached ArrayBuffer"
+  // Esto sucede cuando pdf-lib u otras librerías transfieren el buffer
+  const bookToSave = {
+    ...book,
+    file: book.file instanceof ArrayBuffer ? book.file.slice(0) : book.file,
+  }
+
+  await db.put("books", bookToSave)
 }
 
 export async function getBook(id: string): Promise<PDFBook | undefined> {
@@ -75,7 +83,7 @@ export async function saveProgress(progress: ReadingProgress): Promise<void> {
 }
 
 export async function getProgress(
-  bookId: string
+  bookId: string,
 ): Promise<ReadingProgress | undefined> {
   const db = await getDB()
   return db.get("progress", bookId)
@@ -93,7 +101,7 @@ export async function saveAnnotations(annotation: Annotation): Promise<void> {
 }
 
 export async function getAnnotations(
-  bookId: string
+  bookId: string,
 ): Promise<Annotation | undefined> {
   const db = await getDB()
   return db.get("annotations", bookId)
