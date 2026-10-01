@@ -130,27 +130,78 @@ button {
 
 .react-pdf__Page {
   background: white;
+  position: relative;
 }
 
-/* Arregla texto invisible */
-.react-pdf__Page__textContent {
-  color: black !important;
+/* Canvas siempre visible */
+.react-pdf__Page__canvas {
+  display: block !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ===== SOLUCIÓN PARA DUPLICACIÓN DE TEXTO ===== */
+/* La capa de texto debe ser invisible pero funcional */
+.react-pdf__Page .textLayer {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  overflow: hidden !important;
+  z-index: 2 !important;
+  line-height: 1 !important;
+  user-select: text !important;
+  pointer-events: auto !important;
+  
+  /* Hacer texto invisible - múltiples técnicas para máxima compatibilidad */
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  background: transparent !important;
   mix-blend-mode: normal !important;
+  
+  /* Usar clip-path para ocultar visualmente pero mantener funcional */
+  /* Esta es la clave: el texto existe para selección pero no se ve */
 }
 
-/* Evita que el texto sea invisible */
-.react-pdf__Page__textContent span {
-  color: black !important;
+/* Hacer que todos los elementos de texto sean transparentes */
+.react-pdf__Page .textLayer span,
+.react-pdf__Page .textLayer div {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  opacity: 1 !important;
+  user-select: text !important;
+  pointer-events: auto !important;
 }
 
-.dark .react-pdf__Page__textContent,
-.dark .react-pdf__Page__textContent span {
-  color: black !important;
+/* Modo oscuro - mismas reglas */
+.dark .react-pdf__Page .textLayer,
+.dark .react-pdf__Page .textLayer span,
+.dark .react-pdf__Page .textLayer div {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
 }
 
-.react-pdf__Page__textContent span {
-  user-select: text;
-  pointer-events: auto;
-  padding: 2px 0;
+/* Hacer visible la selección de texto */
+.react-pdf__Page .textLayer::selection,
+.react-pdf__Page .textLayer *::selection {
+  background: rgba(0, 123, 255, 0.3) !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
+/* Para navegadores que aún muestran el texto, usar esta clase adicional */
+.hide-text-layer .react-pdf__Page .textLayer {
+  visibility: hidden !important;
+}
+
+.hide-text-layer .react-pdf__Page .textLayer span {
+  visibility: visible !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
