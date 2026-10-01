@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Book, MoreVertical, Trash2, Clock } from 'lucide-react';
+import { Book, MoreVertical, Trash2, Clock, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -9,13 +10,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { PDFBook, ReadingProgress } from '@/types';
+import { cn } from '@/lib/utils';
+import { PlacedSticker } from '@/components/gamification/PlacedSticker';
+import { StickerPlacementTarget } from '@/components/gamification/StickerPlacementTarget';
+import type { PDFBook, ReadingProgress, Sticker, StickerPlacement, StickerCorner } from '@/types';
 
 interface BookCardProps {
   book: PDFBook;
   progress?: ReadingProgress;
+  ownedStickers: Sticker[];
+  placements: Record<string, StickerPlacement>;
+  placedSticker?: { sticker: Sticker; placement: StickerPlacement };
+  movingStickerId: string | null;
   onRead: (book: PDFBook) => void;
   onDelete: (bookId: string) => void;
+  onStickerSelect: (stickerId: string) => void;
+  onMoveRequest: (stickerId: string) => void;
+  onPlace: (stickerId: string, targetId: string, corner: StickerCorner) => void;
+  onStickerRemove: (stickerId: string) => void;
 }
 
 function formatTimeAgo(timestamp: number): string {
@@ -28,7 +40,23 @@ function formatTimeAgo(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
-export function BookCard({ book, progress, onRead, onDelete }: BookCardProps) {
+export function BookCard({
+  book,
+  progress,
+  ownedStickers,
+  placements,
+  placedSticker,
+  movingStickerId,
+  onRead,
+  onDelete,
+  onStickerSelect,
+  onMoveRequest,
+  onPlace,
+  onStickerRemove,
+}: BookCardProps) {
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const targetId = `book:${book.id}`;
+
   const progressPercent = progress 
     ? Math.round((progress.currentPage / progress.totalPages) * 100) 
     : 0;
@@ -42,14 +70,88 @@ export function BookCard({ book, progress, onRead, onDelete }: BookCardProps) {
       transition={{ duration: 0.2 }}
     >
       <Card 
-        className="group relative overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
-        onClick={() => onRead(book)}
+        className={cn(
+          'group relative overflow-hidden cursor-pointer transition-shadow duration-300 hover:shadow-lg',
+          movingStickerId && 'ring-2 ring-primary/60',
+        )}
+        onClick={() => {
+          if (!movingStickerId) onRead(book);
+        }}
       >
         {/* Book Cover */}
         <div className="aspect-4/4 bg-linear-to-br from-primary/20 via-primary/10 to-accent/10 flex items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,hsl(var(--primary)/0.05)_50%,transparent_75%)] bg-size-[200%_200%] animate-shimmer" />
           
           <Book className="w-16 h-16 text-primary/40" />
+
+          {placedSticker && (
+            <PlacedSticker
+              sticker={placedSticker.sticker}
+              corner={placedSticker.placement.corner}
+              onMoveRequest={onMoveRequest}
+            />
+          )}
+
+          <button
+            type="button"
+            className="absolute bottom-2 left-2 z-20 flex h-8 w-8 items-center justify-center rounded-md border bg-background/90 text-foreground shadow-sm"
+            aria-label="Elegir sticker para este libro"
+            title="Elegir sticker para este libro"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowStickerPicker((visible) => !visible);
+            }}
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
+
+          {showStickerPicker && !movingStickerId && (
+            <div
+              className="absolute bottom-12 left-2 z-30 max-h-40 w-44 overflow-y-auto rounded-md border bg-card p-2 text-left shadow-lg"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {ownedStickers.length === 0 ? (
+                <p className="p-2 text-xs text-muted-foreground">No tienes stickers todavía.</p>
+              ) : (
+                ownedStickers.map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    onClick={() => {
+                      onStickerSelect(sticker.id);
+                      setShowStickerPicker(false);
+                    }}
+                  >
+                    <span aria-hidden="true">{sticker.emoji}</span>
+                    <span className="truncate">{sticker.name}</span>
+                  </button>
+                ))
+              )}
+              {placedSticker && (
+                <button
+                  type="button"
+                  className="mt-1 w-full border-t px-2 pt-2 text-left text-xs text-destructive"
+                  onClick={() => {
+                    onStickerRemove(placedSticker.sticker.id);
+                    setShowStickerPicker(false);
+                  }}
+                >
+                  Quitar sticker
+                </button>
+              )}
+            </div>
+          )}
+
+          {movingStickerId && (
+            <StickerPlacementTarget
+              targetId={targetId}
+              label={book.name}
+              movingStickerId={movingStickerId}
+              placements={placements}
+              onPlace={onPlace}
+            />
+          )}
           
           {/* Progress overlay */}
           {progress && progress.currentPage > 1 && (

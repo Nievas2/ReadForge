@@ -67,6 +67,20 @@ export interface Sticker {
 export interface UserStickers {
   unlocked: string[]
   equipped: string[]
+  bookPlacements?: Record<string, BookStickerPlacement>
+  placements?: Record<string, StickerPlacement>
+}
+
+export type StickerCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right"
+
+export interface StickerPlacement {
+  targetId: string
+  corner: StickerCorner
+}
+
+export interface BookStickerPlacement {
+  stickerId: string
+  corner: StickerCorner
 }
 
 export interface ReadingSession {

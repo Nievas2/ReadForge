@@ -4,10 +4,10 @@ import { StatsCards } from "@/components/gamification/StatsCards"
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-950 dark:text-gray-100">
+    <div className="min-h-screen w-full bg-white dark:bg-zinc-950 text-zinc-950 dark:text-gray-100">
       <Header />
 
-      <main className="container px-4 py-8">
+      <main className="w-full px-4 py-8">
         {/* Stats Overview */}
         <section className="mb-8">
           <StatsCards />

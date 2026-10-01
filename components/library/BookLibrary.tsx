@@ -9,9 +9,25 @@ import { useCallback, useMemo } from "react"
 import { useProgress } from "@/hooks/useProgress"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { useStickers } from "@/hooks/useStickers"
 
 export function BookLibrary() {
   const { books, addBook, deleteBook } = useBooks()
+  const {
+    allStickers,
+    userStickers,
+    movingStickerId,
+    beginStickerMove,
+    cancelStickerMove,
+    placeSticker,
+    removeStickerPlacement,
+    removeBookSticker,
+  } = useStickers()
+  const placements = userStickers.placements ?? {}
+  const ownedStickers = useMemo(
+    () => allStickers.filter((sticker) => userStickers.unlocked.includes(sticker.id)),
+    [allStickers, userStickers.unlocked],
+  )
   const { allProgress } = useProgress()
   const { toast } = useToast()
   const router = useRouter()
@@ -46,13 +62,28 @@ export function BookLibrary() {
   const handleDeleteBook = useCallback(
     (bookId: string) => {
       deleteBook(bookId)
+      removeBookSticker(bookId)
       toast({
         title: "Book Removed",
         description: "The book has been removed from your library.",
       })
     },
-    [deleteBook, toast],
+    [deleteBook, removeBookSticker, toast],
   )
+
+  const handlePlaceSticker = (stickerId: string, targetId: string, corner: import("@/types").StickerCorner) => {
+    placeSticker(stickerId, targetId, corner)
+    cancelStickerMove()
+  }
+
+  const handleSelectBookSticker = (bookId: string, stickerId: string) => {
+    const targetId = `book:${bookId}`
+    const currentSticker = Object.entries(placements).find(([, placement]) => placement.targetId === targetId)
+    if (currentSticker && currentSticker[0] !== stickerId) {
+      removeStickerPlacement(currentSticker[0])
+    }
+    placeSticker(stickerId, targetId)
+  }
 
   if (books.length === 0) {
     return (
@@ -89,8 +120,20 @@ export function BookLibrary() {
               key={book.id}
               book={book}
               progress={progressMap.get(book.id)}
+              ownedStickers={ownedStickers}
+              placements={placements}
+              placedSticker={(() => {
+                const entry = Object.entries(placements).find(([, placement]) => placement.targetId === `book:${book.id}`)
+                const sticker = entry && allStickers.find((item) => item.id === entry[0])
+                return entry && sticker ? { sticker, placement: entry[1] } : undefined
+              })()}
+              movingStickerId={movingStickerId}
               onRead={handleReadBook}
               onDelete={handleDeleteBook}
+              onStickerSelect={(stickerId) => handleSelectBookSticker(book.id, stickerId)}
+              onMoveRequest={beginStickerMove}
+              onPlace={handlePlaceSticker}
+              onStickerRemove={removeStickerPlacement}
             />
           ))}
         </AnimatePresence>

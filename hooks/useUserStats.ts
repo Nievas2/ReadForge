@@ -1,6 +1,7 @@
 "use client"
 import { useState, useCallback, useEffect } from "react"
 import { saveToStorage, loadFromStorage } from "@/lib/storage"
+import { unlockAchievementsForStats } from "@/lib/achievements"
 import type { UserStats } from "@/types"
 
 const STATS_KEY = "user_stats"
@@ -42,6 +43,7 @@ export function useUserStats() {
     setStats((prev) => {
       const newStats = { ...prev, ...updates }
       saveToStorage(STATS_KEY, newStats)
+      unlockAchievementsForStats(newStats)
       return newStats
     })
   }, [])
@@ -103,6 +105,7 @@ export function useUserStats() {
         }
 
         saveToStorage(STATS_KEY, newStats)
+        unlockAchievementsForStats(newStats)
         return newStats
       })
     },
@@ -116,6 +119,7 @@ export function useUserStats() {
         totalBooksCompleted: prev.totalBooksCompleted + 1,
       }
       saveToStorage(STATS_KEY, newStats)
+      unlockAchievementsForStats(newStats)
       return newStats
     })
   }, [])

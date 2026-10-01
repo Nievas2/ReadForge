@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import { Moon, Sun, BookOpen, Sparkles } from "lucide-react"
+import { Moon, Sun, BookOpen, Sparkles, Trophy } from "lucide-react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CoinDisplay } from "@/components/gamification/CoinDisplay"
 import { StreakDisplay } from "@/components/gamification/StreakDisplay"
@@ -67,7 +68,7 @@ export function Header() {
       animate={{ y: 0, opacity: 1 }}
       className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
     >
-      <div className="container flex h-16 items-center justify-between px-4">
+      <div className="w-full flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
@@ -87,6 +88,13 @@ export function Header() {
         <div className="flex items-center gap-3">
           <StreakDisplay streak={stats.currentStreak} className="hidden sm:flex" />
           <CoinDisplay coins={stats.coins} />
+
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <Link href="/achievements" aria-label="Ver logros" title="Ver logros">
+              <Trophy className="w-4 h-4" />
+              <span className="hidden sm:inline">Logros</span>
+            </Link>
+          </Button>
 
           <Button
             variant="outline"

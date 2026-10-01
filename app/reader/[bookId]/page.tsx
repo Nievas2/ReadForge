@@ -89,10 +89,12 @@ export default function ReaderPage() {
     page: number,
     total: number
   ) => {
+    const isFirstCompletion =
+      page >= total && !getBookProgress(bookId)?.completedAt
     updateProgress(bookId, page, total)
 
     // Check if book completed
-    if (page >= total) {
+    if (isFirstCompletion) {
       completeBook()
       toast({
         title: "🎉 Libro terminado",
