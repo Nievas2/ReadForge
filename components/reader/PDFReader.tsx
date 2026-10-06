@@ -174,6 +174,7 @@ export function PDFReader({
     if (pageNumber < numPages) {
       goToPage(pageNumber + 1)
     }
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }, [pageNumber, numPages, goToPage])
 
   const goToPrevPage = useCallback(() => {
